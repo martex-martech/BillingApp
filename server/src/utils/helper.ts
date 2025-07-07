@@ -81,6 +81,7 @@ export const verifyOTP = (
 ) => {
   const record = otpStorage[email];
 
+  // Basic validations
   if (!record) return { success: false, message: 'OTP not found or expired' };
   if (record.expiresAt < Date.now()) {
     delete otpStorage[email];

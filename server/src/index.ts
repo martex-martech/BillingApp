@@ -1,7 +1,10 @@
 import express from 'express';
 import cors from 'cors';
-import otpRoutes from './src/routes/otpRoute';
+import AuthRoutes from './routes/AuthRoutes';
+import dotenv from 'dotenv';
 
+
+dotenv.config();
 const app = express();
 
 // Middleware
@@ -9,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api', otpRoutes);
+app.use('/v1/api', AuthRoutes);
 
 const PORT = 3000;
 app.listen(PORT, () => {

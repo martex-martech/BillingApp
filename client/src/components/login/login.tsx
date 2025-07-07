@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { AuthService } from '../../services/otpservice';
+import { useNavigate } from 'react-router-dom';
+import { AuthService } from '../../services/Authservice';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -18,6 +19,8 @@ const Login: React.FC = () => {
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isOtpValid = /^\d{6}$/.test(otp);
   const isFormValid = isEmailValid && agreeToTerms;
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -88,7 +91,9 @@ const Login: React.FC = () => {
       const response = await AuthService.verifyOtp(email, otp, otpId);
       if (response.success) {
         setSuccessMsg('OTP Verified! Redirecting...');
-        // You can navigate to dashboard or another page here
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
       } else {
         setError(response.message || 'OTP verification failed');
       }
@@ -101,6 +106,8 @@ const Login: React.FC = () => {
   };
 
   const handleOtpDigitChange = (index: number, value: string) => {
+    if (isLoading) return;
+
     const newOtp = otp.split('');
     newOtp[index] = value.replace(/\D/g, '');
     const joinedOtp = newOtp.join('').slice(0, 6);
@@ -114,6 +121,8 @@ const Login: React.FC = () => {
   };
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (isLoading) return;
+
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
       const prevInput = document.getElementById(`otp-${index - 1}`);
       if (prevInput) (prevInput as HTMLInputElement).focus();
@@ -121,12 +130,31 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-vh-100 bg-light d-flex flex-column justify-content-center py-5 px-3">
+    <div className="min-vh-100 bg-light d-flex flex-column justify-content-center py-5 px-3 position-relative">
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(2px)',
+            zIndex: 1000
+          }}>
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto w-100" style={{ maxWidth: '28rem' }}>
         <h1 className="text-center display-5 fw-bold text-dark mb-2">Ezo Admin Sign In</h1>
         <h2 className="text-center fs-4 fw-semibold text-secondary mb-5">Login</h2>
 
-        <div className="bg-white p-4 shadow rounded-3 border-top border-primary border-4">
+        <div className="bg-white p-4 shadow rounded-3 border-top border-primary border-4 position-relative">
+          {/* Disable all interactions when loading */}
+          {isLoading && (
+            <div className="position-absolute top-0 start-0 w-100 h-100" style={{ zIndex: 100 }} />
+          )}
+
           {error && <div className="alert alert-danger">{error}</div>}
           {successMsg && <div className="alert alert-success">{successMsg}</div>}
 
@@ -185,7 +213,6 @@ const Login: React.FC = () => {
               </button>
             </form>
           )}
-
 
           {step === 'verify' && (
             <form onSubmit={handleVerifyOTP}>
