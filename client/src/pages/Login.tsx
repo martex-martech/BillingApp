@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import { useNavigate } from 'react-router-dom';
-import { AuthService } from '../../services/Authservice';
+import { AuthService } from '../services/Authservice';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
