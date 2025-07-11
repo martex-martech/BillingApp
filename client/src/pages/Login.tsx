@@ -90,6 +90,7 @@ const Login: React.FC = () => {
       const response = await AuthService.verifyOtp(email, otp, otpId);
       if (response.success) {
         setSuccessMsg('OTP Verified! Redirecting...');
+        
         setTimeout(() => {
           navigate('/dashboard');
         }, 1000);

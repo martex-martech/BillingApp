@@ -43,6 +43,7 @@ interface AppContextType {
   addInvoice: (invoice: Omit<Invoice, 'id'>) => void;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AppContext = createContext<AppContextType | null>(null);
 
 const initialParties: Party[] = [
