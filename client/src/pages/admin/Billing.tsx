@@ -1,5 +1,5 @@
 import React, { useState, useContext, useMemo } from 'react';
-import { AppContext, type InvoiceItem } from '../context/AppContext';
+import { AppContext, type InvoiceItem } from '../../context/AppContext';
 
 const Billing: React.FC = () => {
     const [partyId, setPartyId] = useState('');

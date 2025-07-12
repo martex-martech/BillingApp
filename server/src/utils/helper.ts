@@ -18,7 +18,6 @@ interface OTPRecord {
   id: string;
 }
 
-// In-memory storage (replace with Redis/database in production)
 const otpStorage: Record<string, OTPRecord> = {};
 
 export const sendEmailWithOTP = async (

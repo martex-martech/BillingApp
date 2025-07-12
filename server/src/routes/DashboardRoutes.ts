@@ -1,10 +1,10 @@
-import express from 'express';
-import { getDashboardData, updateUserDashboardId, createDashboardData } from '../controller/DashboardController';
+// import express from 'express';
+// import { getDashboardData, updateUserDashboardId, createDashboardData } from '../controller/DashboardController';
 
-const router = express.Router();
+// const router = express.Router();
 
-router.get('/dashboard', getDashboardData);
-router.patch('/dashboard/user', updateUserDashboardId);
-router.post('/dashboard', createDashboardData);
+// router.get('/dashboard', getDashboardData);
+// router.patch('/dashboard/user', updateUserDashboardId);
+// router.post('/dashboard', createDashboardData);
 
-export default router;
+// export default router;

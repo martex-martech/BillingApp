@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import AuthRoutes from './routes/AuthRoutes';
+import superadmin from './routes/superadminRouter';
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 
 // Routes
 app.use('/v1/api', AuthRoutes);
+app.use('/v1/api', superadmin)
 
 // MongoDB Connection
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/BillingApp';

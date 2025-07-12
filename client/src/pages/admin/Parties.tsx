@@ -1,5 +1,5 @@
 import React, { useState, useContext, useMemo } from 'react';
-import { AppContext, type Party } from '../context/AppContext';
+import { AppContext, type Party } from '../../context/AppContext';
 
 const AddPartyModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
     const [name, setName] = useState('');

@@ -1,5 +1,5 @@
 import React, { useState, useContext, useMemo } from 'react';
-import { AppContext, type Item } from '../context/AppContext';
+import { AppContext, type Item } from '../../context/AppContext';
 
 const AddItemModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
     const [name, setName] = useState('');

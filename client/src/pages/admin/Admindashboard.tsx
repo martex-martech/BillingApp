@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getDashboardData, type DashboardData } from "../services/dashboardservice";
+import { getDashboardData, type DashboardData } from "../../services/admin/dashboardservice";
 
 const MetricCard: React.FC<{
   title: string;

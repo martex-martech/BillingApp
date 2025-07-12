@@ -1,7 +1,6 @@
-import { Request, Response } from 'express';
 import { sendEmailWithOTP, verifyOTP } from '../utils/helper';
 import User from '../Models/User';
-import Dashboard from '../Models/dashbord';
+import jwt from 'jsonwebtoken';
 
 const smtpConfig = {
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -13,9 +12,15 @@ const smtpConfig = {
   }
 };
 
-export const sendOTP = async (req: Request, res: Response): Promise<void> => {
+export const sendOTP = async (req: any, res: any): Promise<void> => {
   try {
     const { email } = req.body;
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Email not registered' });
+    }
+
     const { success, otpId } = await sendEmailWithOTP(email, smtpConfig);
 
     if (success) {
@@ -29,41 +34,29 @@ export const sendOTP = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const verifyOTPController = async (req: Request, res: Response): Promise<void> => {
+export const verifyOTPController = async (req: any, res: any): Promise<void> => {
   try {
     const { email, otp, otpId } = req.body;
-    console.log('Verifying OTP for email:', email);
+
     const result = await verifyOTP(email, otp, otpId);
-    console.log('OTP verification result:', result);
+    if (!result.success) return res.status(401).json(result);
 
-    if (result.success) {
-      let user = await User.findOne({ email: email.toLowerCase() });
-
-      if (!user) {
-        user = new User({ email: email.toLowerCase() });
-        await user.save();
-
-        if (!user.dashboardDataId) {
-          console.log('Creating sample dashboard for new user:', user.email);
-          const sampleDashboard = new Dashboard({
-            todaySale: 0,
-            receivable: 0,
-            lowStockItems: 0
-          });
-          try {
-            const savedDashboard = await sampleDashboard.save();
-            console.log('Sample dashboard created with id:', savedDashboard._id);
-            user.dashboardDataId = savedDashboard._id as any;
-            await user.save();
-            console.log('User updated with dashboardDataId:', user.dashboardDataId);
-          } catch (err) {
-            console.error('Error saving sample dashboard or updating user:', err);
-          }
-        }
-      }
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Email not registered' });
     }
 
-    res.json(result);
+    const token = jwt.sign(
+      {
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET || 'secret_key',
+      { expiresIn: '1d' }
+    );
+
+    res.json({ success: true, message: 'OTP verified', token, user });
   } catch (error) {
     console.error('❌ Error verifying OTP:', error);
     res.status(500).json({ success: false, message: 'Server error' });

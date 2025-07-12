@@ -9,7 +9,6 @@ const Login: React.FC = () => {
   const [step, setStep] = useState<'email' | 'verify'>('email');
   const [resendTimer, setResendTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
-
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +55,45 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isOtpValid) {
+      setError('Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await AuthService.verifyOtp(email, otp, otpId);
+      if (response.success) {
+        setSuccessMsg('OTP Verified! Redirecting...');
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('userRole', response.user.role);
+        localStorage.setItem('userEmail', response.user.email);
+
+        setTimeout(() => {
+          const role = response.user.role;
+          if (role === 'superadmin') {
+            navigate('/superadmin/dashboard');
+          } else if (role === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/staff/dashboard');
+          }
+        }, 1000);
+      } else {
+        setError(response.message || 'OTP verification failed');
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to verify OTP.';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleResendOTP = async () => {
     if (!canResend) return;
 
@@ -76,38 +114,8 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isOtpValid) {
-      setError('Please enter a valid 6-digit OTP');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await AuthService.verifyOtp(email, otp, otpId);
-      if (response.success) {
-        setSuccessMsg('OTP Verified! Redirecting...');
-        
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
-      } else {
-        setError(response.message || 'OTP verification failed');
-      }
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to verify OTP.';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleOtpDigitChange = (index: number, value: string) => {
     if (isLoading) return;
-
     const newOtp = otp.split('');
     newOtp[index] = value.replace(/\D/g, '');
     const joinedOtp = newOtp.join('').slice(0, 6);
@@ -130,169 +138,108 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-vh-100 bg-light d-flex flex-column justify-content-center py-5 px-3 position-relative">
-      {/* Loading Overlay */}
+    <div className="min-vh-100 d-flex flex-column justify-content-center align-items-center bg-light px-3 py-5">
       {isLoading && (
-        <div className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            backdropFilter: 'blur(2px)',
-            zIndex: 1000
-          }}>
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
+        <div className="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-flex justify-content-center align-items-center z-3">
+          <div className="spinner-border text-primary" />
         </div>
       )}
 
-      <div className="mx-auto w-100" style={{ maxWidth: '28rem' }}>
-        <h1 className="text-center display-5 fw-bold text-dark mb-2">Ezo Admin Sign In</h1>
-        <h2 className="text-center fs-4 fw-semibold text-secondary mb-5">Login</h2>
+      <div className="bg-white p-4 rounded shadow" style={{ maxWidth: '28rem', width: '100%' }}>
+        <h1 className="text-center text-dark fw-bold mb-3">Ezo Admin Sign In</h1>
+        {error && <div className="alert alert-danger">{error}</div>}
+        {successMsg && <div className="alert alert-success">{successMsg}</div>}
 
-        <div className="bg-white p-4 shadow rounded-3 border-top border-primary border-4 position-relative">
-          {/* Disable all interactions when loading */}
-          {isLoading && (
-            <div className="position-absolute top-0 start-0 w-100 h-100" style={{ zIndex: 100 }} />
-          )}
+        {step === 'email' && (
+          <form onSubmit={handleSendOTP}>
+            <div className="mb-4">
+              <label htmlFor="email" className="form-label">Email Address</label>
+              <input
+                id="email"
+                type="email"
+                className={`form-control ${email && !isEmailValid ? 'is-invalid' : ''}`}
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(null);
+                }}
+                disabled={isLoading}
+              />
+              {email && !isEmailValid && (
+                <div className="invalid-feedback">Enter a valid email</div>
+              )}
+            </div>
 
-          {error && <div className="alert alert-danger">{error}</div>}
-          {successMsg && <div className="alert alert-success">{successMsg}</div>}
+            <div className="form-check mb-4">
+              <input
+                type="checkbox"
+                id="terms"
+                className="form-check-input"
+                checked={agreeToTerms}
+                onChange={(e) => setAgreeToTerms(e.target.checked)}
+                disabled={isLoading}
+              />
+              <label htmlFor="terms" className="form-check-label">
+                I agree to the terms and conditions.
+              </label>
+            </div>
 
-          {step === 'email' && (
-            <form onSubmit={handleSendOTP}>
-              <div className="mb-4">
-                <label htmlFor="email" className="form-label text-secondary">Email Address</label>
-                <input
-                  id="email"
-                  type="email"
-                  className={`form-control ${email && !isEmailValid ? 'is-invalid' : ''}`}
-                  placeholder="Enter your email"
-                  value={email}
-                  autoComplete='off'
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setError(null);
-                  }}
+            <button
+              type="submit"
+              className="btn btn-primary w-100"
+              disabled={!isFormValid || isLoading}
+            >
+              {isLoading ? 'Sending...' : 'GET OTP'}
+            </button>
+          </form>
+        )}
+
+        {step === 'verify' && (
+          <form onSubmit={handleVerifyOTP}>
+            <div className="mb-3 text-center">
+              <h5>Enter the 6-digit OTP sent to your email</h5>
+              <div className="d-flex justify-content-center gap-2 my-3">
+                {[0, 1, 2, 3, 4, 5].map((index) => (
+                  <input
+                    key={index}
+                    id={`otp-${index}`}
+                    type="text"
+                    maxLength={1}
+                    className="form-control text-center"
+                    style={{ width: '2.5rem', height: '2.5rem', fontSize: '1.2rem' }}
+                    value={otp[index] || ''}
+                    onChange={(e) => handleOtpDigitChange(index, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                    disabled={isLoading}
+                  />
+                ))}
+              </div>
+
+              {canResend ? (
+                <button
+                  type="button"
+                  className="btn btn-link"
+                  onClick={handleResendOTP}
                   disabled={isLoading}
-                />
-                {email && !isEmailValid && (
-                  <div className="invalid-feedback">Please enter a valid email address</div>
-                )}
-              </div>
+                >
+                  Resend OTP
+                </button>
+              ) : (
+                <p className="text-muted">Resend OTP in {resendTimer} sec</p>
+              )}
+            </div>
 
-              <div className="mb-4 form-check">
-                <input
-                  type="checkbox"
-                  id="terms"
-                  className={`form-check-input me-2 ${!agreeToTerms && isEmailValid ? 'is-invalid' : ''}`}
-                  checked={agreeToTerms}
-                  onChange={(e) => setAgreeToTerms(e.target.checked)}
-                  disabled={isLoading}
-                />
-                <label htmlFor="terms" className="form-check-label text-secondary">
-                  I agree to the terms and conditions.<span className="text-danger">*</span>
-                </label>
-                {!agreeToTerms && isEmailValid && (
-                  <div className="invalid-feedback d-block">You must agree to the terms</div>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={!isFormValid || isLoading}
-                className={`w-100 btn ${isFormValid ? 'btn-primary' : 'btn-secondary'}`}
-              >
-                {isLoading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" />
-                    Sending...
-                  </>
-                ) : (
-                  'GET OTP'
-                )}
-              </button>
-            </form>
-          )}
-
-          {step === 'verify' && (
-            <form onSubmit={handleVerifyOTP}>
-              <div className="mb-4 text-center">
-                <h3 className="mb-3">Enter OTP Code</h3>
-                <div className="d-flex justify-content-center gap-2 mb-3">
-                  {[0, 1, 2, 3, 4, 5].map((index) => (
-                    <input
-                      key={index}
-                      type="text"
-                      className={`form-control text-center otp-input ${otp.length === index ? 'active' : ''}`}
-                      maxLength={1}
-                      value={otp[index] || ''}
-                      onChange={(e) => handleOtpDigitChange(index, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      id={`otp-${index}`}
-                      style={{
-                        width: '3rem',
-                        height: '3rem',
-                        fontSize: '1.5rem',
-                        padding: '0.5rem',
-                        border: '1px solid #ced4da',
-                        borderRadius: '0.375rem'
-                      }}
-                      disabled={isLoading}
-                    />
-                  ))}
-                </div>
-                <p className="text-muted">Enter the 6-digit code sent to your email</p>
-
-                <div className="mt-3">
-                  {canResend ? (
-                    <button
-                      type="button"
-                      onClick={handleResendOTP}
-                      className="btn btn-link p-0"
-                      disabled={isLoading}
-                    >
-                      Resend OTP
-                    </button>
-                  ) : (
-                    <p className="text-muted small">
-                      Resend OTP in {resendTimer} seconds
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-100 btn btn-primary py-2"
-                disabled={isLoading || !isOtpValid}
-              >
-                {isLoading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" />
-                    Verifying...
-                  </>
-                ) : (
-                  'VERIFY OTP'
-                )}
-              </button>
-            </form>
-          )}
-        </div>
+            <button
+              type="submit"
+              className="btn btn-success w-100"
+              disabled={!isOtpValid || isLoading}
+            >
+              {isLoading ? 'Verifying...' : 'Verify OTP'}
+            </button>
+          </form>
+        )}
       </div>
-
-      <style>{`
-        .otp-input {
-          transition: all 0.3s ease;
-        }
-        .otp-input:focus {
-          border-color: #86b7fe;
-          box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-          outline: 0;
-        }
-        .otp-input.active {
-          border-color: #86b7fe;
-        }
-      `}</style>
     </div>
   );
 };

@@ -1,29 +1,54 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import SuperAdmin from './pages/SuperAdmin';
-import Settings from './pages/Settings';
-import Inventory from './pages/Inventory';
-import Billing from './pages/Billing';
-import DashboardLayout from './components/DashboardLayout';
-import Parties from './pages/Parties';
 
-createRoot(document.getElementById('root')!).render(
-  <BrowserRouter>
-    <Routes>
-      <Route path="/" element={<Login />} />
-      <Route element={<DashboardLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/parties" element={<Parties />} />
-        <Route path="/super-admin" element={<SuperAdmin />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/billing" element={<Billing />} />
-      </Route>
-    </Routes>
-  </BrowserRouter>
+// Pages
+import Login from './pages/Login';
+import Dashboard from './pages/admin/Admindashboard';
+import Settings from './pages/admin/Settings';
+import Inventory from './pages/admin/Inventory';
+import Billing from './pages/admin/Billing';
+import Parties from './pages/admin/Parties';
+
+// Layouts
+import DashboardLayout from './components/DashboardLayout';
+
+// Auth
+import ProtectedRoute from './components/ProtectedRoute';
+import SuperAdminDashboard from './pages/superadmin/Superadmindashboard';
+
+const container = document.getElementById('root')!;
+const root = createRoot(container);
+
+root.render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <Routes>
+        {/* Public Route */}
+        <Route path="/" element={<Login />} />
+
+        {/* Admin Routes with Sidebar Layout */}
+        <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+          <Route path="admin/dashboard" element={<Dashboard />} />
+          <Route path="admin/parties" element={<Parties />} />
+          <Route path="admin/settings" element={<Settings />} />
+          <Route path="admin/inventory" element={<Inventory />} />
+          <Route path="admin/billing" element={<Billing />} />
+        </Route>
+
+        {/* Super Admin Route without Sidebar */}
+        <Route
+          path="/superadmin/dashboard"
+          element={
+            <ProtectedRoute>
+              <SuperAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  </React.StrictMode>
 );
